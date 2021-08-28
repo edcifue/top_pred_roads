@@ -1,0 +1,611 @@
+---
+title: 'Road risk study cases'
+output:
+  html_document:
+    self_contained: no
+    toc: true
+    toc_float: true
+output_dir: "docs"
+---
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+knitr::opts_knit$set(root.dir = "~/Rproj/Rproj/02_roads_predators/")
+```
+
+
+Hola, esto es un Rmarkdown para mostrarte lo de roads.
+
+<br><br>
+
+# Map Risk Index
+
+Estuve viendo el índice que hicimos y tenía dudas de cómo hacer el de future roads porque ahora tenemos es un risk assessment. Al final lo que hice fue sumar todos los risks de las especies:
+
+$$ Road\ risk = \sum{{species\ risk}_i} $$
+En el índice anterior le habíamos agregado también PA, que ya no me convence mucho. Para sumarlo, al pixel que fuera PA le dimos un valor (peso) igual a la especie con menos riesgo. O sea, como si PA fuera una especie más. 
+
+$$ Road\ risk = \sum{{species\ risk}_i} + \min({species\ risk}_i)*PA $$
+
+en donde PA tiene valores de 0 o 1 (i.e., $PA \in \{0,1\}$).Pero pensándolo más, el peso de PAs podría ser el promedio del riesgo de las especies presentes en ese pixel.
+
+
+$$ Road\ risk = \sum{{species\ risk}_i} + \left(\frac{\sum{{species\ risk}_i}}{n}\right)*PA $$
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+setwd('~/Rproj/Rproj/02_roads_predators/')
+library(raster)
+rks <- raster('data/index_spp/species_index_sum_v2_Ago2021.tif')
+rkm <- raster('data/index_spp/species_index_mean_v2_Ago2021.tif')
+rkmin <- raster('data/index_spp/species_index_min_v2_Ago2021.tif')
+rk.land <- raster('data/index_spp/species_index_land_v2_Ago2021.tif')
+PA <- raster('data/rasterize/protected_areas_land_masked.tif')
+```
+
+
+## Global maps species risks{.tabset}
+
+### sum
+```{r}
+plot(rks, main='sum of species risk')
+```
+
+### min
+
+```{r}
+plot(rkmin, main='min species risk')
+```
+
+### mean
+
+```{r}
+plot(rkm, main='mean species risk')
+```
+
+## {-}
+
+## Study sites species risks{.tabset}
+
+Así se ve en nuestras study areas.
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+rks.PA <-  sum(rks, rkmin*PA, na.rm = T)
+rkm.PA <-  sum(rks, rkm*PA, na.rm = T)
+
+library(cowplot)
+library(sf)
+e.af <- extent(c(-17.53604, 52, -34.81917, 19-0.32991))
+e.br <- extent(c(-75.18, -43.18, -16.39-2-.55077, 6.29-2))+6 
+e.np <- extent(c(79.08, 89.17, 23.3, 30.6))+2
+
+rks.af <- crop(rks,e.af)
+rks.br <- crop(rks,e.br)
+rks.np <- crop(rks,e.np)
+
+rks.PA.af <- crop(rks.PA,e.af)
+rks.PA.br <- crop(rks.PA,e.br)
+rks.PA.np <- crop(rks.PA,e.np)
+
+rkm.PA.af <- crop(rkm.PA,e.af)
+rkm.PA.br <- crop(rkm.PA,e.br)
+rkm.PA.np <- crop(rkm.PA,e.np)
+
+risk.af <- st_read('data/index_spp/risk_line_AF')
+risk.br <- st_read('data/index_spp/risk_line_BR')
+risk.np <- st_read('data/index_spp/risk_line_NP')
+
+```
+
+
+### Africa{.tabset}
+
+#### sum risks
+
+```{r}
+plot(rks.af)#, zlim=c(0,maxValue(rkm.PA.af)))
+
+```
+
+#### sum risks con min·PA
+```{r}
+plot(rks.PA.af)#, zlim=c(0,maxValue(rkm.PA.af)))
+```
+
+#### sum risks con mean·PA
+```{r}
+plot(rkm.PA.af)#, zlim=c(0,maxValue(rkm.PA.af)))
+```
+
+
+### Brazil{.tabset}
+
+#### sum risks
+
+```{r}
+plot(rks.br)#, zlim=c(0,maxValue(rkm.PA.br)))
+
+```
+
+#### sum risks con min·PA
+```{r}
+plot(rks.PA.br)#, zlim=c(0,maxValue(rkm.PA.br)))
+```
+
+#### sum risks con mean·PA
+```{r}
+plot(rkm.PA.br)#, zlim=c(0,maxValue(rkm.PA.br)))
+```
+
+
+### Nepal{.tabset}
+
+#### sum risks
+
+```{r}
+plot(rks.np)#, zlim=c(0,maxValue(rkm.PA.np)))
+
+```
+
+#### sum risks con min·PA
+```{r}
+plot(rks.PA.np)#, zlim=c(0,maxValue(rkm.PA.np)))
+```
+
+#### sum risks con mean·PA
+```{r}
+plot(rkm.PA.np)#, zlim=c(0,maxValue(rkm.PA.np)))
+```
+
+
+
+# Road Risk{.tabset}
+Ahora, así se vería el risk en la carretera (sin PA):
+
+> tengo que actualizarlas con min·PA y con mean·PA
+
+## Africa
+```{r}
+plot(crop(rk.land, e.af), col='grey', legend=F)
+plot(rks.af, col=sf.colors(10), legend.only=T)
+plot(risk.af[,'layer'], lwd=2, add=T, )
+```
+
+## Brazil
+```{r}
+plot(crop(rk.land, e.br), col='grey', legend=F)
+plot(rks.br, col=sf.colors(10), legend.only=T)
+plot(risk.br[,'layer'], lwd=2, add=T, )
+```
+
+## Nepal
+```{r}
+plot(crop(rk.land, e.np), col='grey', legend=F)
+plot(rks.np, col=sf.colors(10), legend.only=T)
+plot(risk.np[,'layer'], lwd=2, add=T, )
+```
+
+
+
+
+# Figure 3
+
+```{r}
+##Import species index data for colors---------
+old <- read.csv('data/index_spp/final index_species.csv')
+old$risk <- round(old$index_cat_10,1)
+old <- old[order(-old$risk),]
+
+index_sp <- read.csv('Road Risk - final index_species.csv')
+index_sp$risk <- round(index_sp$risk*10,1)
+
+
+#colors for index by the value
+col.indx <- colorRampPalette(list('darkgreen','forestgreen','chartreuse4','darkolivegreen3','yellow','orange','red','darkred','indianred4','lightpink4'))(1001)
+col.hcl1 <- hcl.colors(1001, palette = 'Lajolla')
+col.hcl2 <- rev(hcl.colors(1001, palette = 'SunsetDark'))
+col.hcl3 <- rev(hcl.colors(1001, palette = 'RedOr'))
+col.hcl4 <- rev(hcl.colors(1001, palette = 'Inferno'))
+col.hcl5 <- rev(hcl.colors(1001, palette = 'Plasma'))
+
+color.indx2 <- data.frame(value=seq(0,10,by=0.01), color.name=col.indx)
+
+```
+
+Hice los barplots, pero creo que no te van a gustar los colores. Es posible que tengamos que cambiarla porque hay muchos verdes y eso parece que fuera bueno. Quizás empezar con amarillo o la misma escala del mapa de future roads. Hice pruebas con varias paletas de colores a ver si te gusta alguna.
+
+## all species index{.tabset}
+Primero, voy a poner todas las especies en un barplot para que puedas ver la escala de colores asociada a cada risk.
+
+```{r fig.height=4.5}
+sp.bar <- function(db,colset, main) {
+  par(mar=c(10,3,3,1))
+  h <- barplot(db$risk, col=colset[db$risk*100+1], names.arg=db$binomial, las=2, main=main, cex.names=.8)
+  text(h,0.1, labels=db$risk, srt=90, adj=0, cex=.8)
+}
+
+sp.bar(old,col.indx,'old index - original color')
+```
+
+### original
+
+```{r fig.height=4.5}
+sp.bar(index_sp,col.indx,'new index - original color')
+```
+
+<br><br>
+
+### Lajolla
+
+```{r fig.height=4.5}
+sp.bar(index_sp,col.hcl1,'new index - Lajolla')
+```
+
+<br><br>
+
+### SunsetDark
+
+```{r fig.height=4.5}
+sp.bar(index_sp,col.hcl2,'new index - SunsetDark')
+```
+
+<br><br>
+
+### RedOr
+
+```{r fig.height=4.5}
+sp.bar(index_sp,col.hcl3,'new index - RedOr')
+```
+
+<br><br>
+
+### Inferno
+
+```{r fig.height=4.5}
+sp.bar(index_sp,col.hcl4,'new index - Inferno')
+```
+
+<br><br>
+
+### Plasma
+
+```{r fig.height=4.5}
+sp.bar(index_sp,col.hcl5,'new index - Plasma')
+```
+
+<br><br>
+
+
+## Future roads spp. barplots
+
+```{r}
+# load data
+## Brazil -------
+#Import data 
+br <- read.csv("data/index_spp/BRAMA_Length_new_rd_each_spp_20201005.csv")
+#sum different types of road by species
+br2 <- data.frame(aggregate(br$length, by=list(species=br$binomial), FUN=sum))
+#Add total lenght of the new road project, and calculate teh % that will cross species distribution
+br2$perc <- round(br2$x/36456.43*100,1)
+#merge with colors dataframe
+br3 <- merge(br2, index_sp[,c('binomial','area','risk')], by.x="species", by.y="binomial", all.x=T)
+#Calculate proportion of distribution range affected by roads
+br3$dist_road <- br3$x / br3$area *100
+br3$old_index <- old$risk[match(br3$species, old$binomial)]
+
+## Africa -------
+#Import data
+af<- read.csv("data/index_spp/AF_Length_new_rd_each_spp_20201005.csv")
+#Add total lenght of the new road project, and calculate teh % that will cross species distribution
+af$perc <- round(af$length/57122.69*100,1)
+#merge with colors dataframe
+af2<- merge(af, index_sp[,c('binomial','area','risk')], by="binomial", all.x=T)
+#Calculate proportion of distribution range affected by roads
+af2$dist_road<- af2$length / af2$area *100
+af2$old_index <- old$risk[match(af2$binomial, old$binomial)]
+## Nepal -------
+#Import data
+np<- read.csv("data/index_spp/NP_Length_new_rd_each_spp_20201005.csv")
+#Add total lenght of the new road project, and calculate teh % that will cross species distribution
+np$perc <- round(np$length/974.5949*100,1)
+#merge with colors dataframe
+np2<- merge(np, index_sp[,c('binomial','area','risk')], by="binomial", all.x=T)
+#Calculate proportion of distribution range affected by roads
+np2$dist_road<- np2$length / np2$area *100
+np2$old_index <- old$risk[match(np2$binomial, old$binomial)]
+
+# bar plot functions (Future roads) ----
+library(magrittr)
+library(ggplot2)
+library(gridExtra)
+
+## Brazil ------
+bar.br <- function(colset, idx='risk') {
+  g1<- ggplot(data=br3, aes(x=reorder(species,-dist_road), y=x, label=paste0(perc,"%")))+ 
+    geom_bar(stat="identity", width=0.5, fill=colset[br3[,idx]*100+1])+ 
+    theme_classic()+ 
+    theme(axis.title.y = element_blank(), 
+          axis.text.y = element_blank(),
+          axis.text.x = element_text(size=15), axis.title=element_text(size=15),
+          axis.ticks.y = element_blank(),
+          plot.margin = unit(c(1,-1,3.84,30), "mm")) +
+    geom_text(aes(y = x+4500),angle = 360, hjust = -.05, size = 4.5)+
+    ylab("FRL (km)") + 
+    scale_y_reverse(breaks=seq(0,40000,6000))+ scale_x_discrete(position="top")+
+    coord_flip()
+  
+  g2 <-ggplot(data=br3, aes(x=reorder(species,-dist_road), y=dist_road, label=species))+ 
+    geom_bar(stat="identity", width=0.5, fill=colset[br3[,idx]*100+1])+
+    theme_classic()+ 
+    theme(axis.title.y = element_blank(), 
+          axis.text.y = element_blank(), 
+          axis.text.x = element_text(size=15), axis.title=element_text(size=15),
+          axis.ticks.y = element_blank(),
+          plot.margin = unit(c(1,30,1,-1), "mm")) +
+    geom_text(aes(y = dist_road),angle = 360, hjust = -.05, size = 5.3, fontface="italic")+
+    ylab(bquote("FRL relative to species range"~(km/km^2)))+
+    scale_y_continuous(breaks=seq(0,0.5,0.05))+
+    coord_flip(clip = "off")
+  
+  #Now join plots
+  gg1 <- ggplot_gtable(ggplot_build(g1))
+  gg2 <- ggplot_gtable(ggplot_build(g2))
+  
+  # pdf("~/sp_new roads_BR_twobar.pdf", 15,5)
+  grid.arrange(gg1,gg2,ncol=2)
+  # dev.off()
+}
+  
+## Africa ------------
+bar.af <- function(colset, idx='risk') {
+  g1<- ggplot(data=af2, aes(x=reorder(binomial,-dist_road), y=length, label=paste0(perc,"%")))+ 
+    geom_bar(stat="identity", width=0.8, fill=colset[af2[,idx]*100+1])+ 
+    theme_classic()+ 
+    theme(axis.title.y = element_blank(), 
+          axis.text.y = element_blank(),
+          axis.text.x = element_text(size=15), axis.title=element_text(size=15),
+          axis.ticks.y = element_blank(),
+          plot.margin = unit(c(1,-1,3.84,40), "mm")) +
+    geom_text(aes(y = length+5500),angle = 360, hjust = -.05, size = 4.5)+
+    ylab("FRL (km)") + 
+    scale_y_reverse(breaks=seq(0,42000,6000))+ scale_x_discrete(position="top")+
+    coord_flip()
+  
+  g2<- ggplot(data=af2, aes(x=reorder(binomial,-dist_road), y=dist_road, label=binomial))+ 
+    geom_bar(stat="identity", width=0.8, fill=colset[af2[,idx]*100+1])+
+    theme_classic()+ 
+    scale_y_continuous(breaks=seq(0,0.5,0.05))+
+    theme(axis.title.y = element_blank(), 
+          axis.text.y = element_blank(), 
+          axis.text.x = element_text(size=15), axis.title=element_text(size=15),
+          axis.ticks.y = element_blank(),
+          plot.margin = unit(c(1,40,1,-1), "mm")) +
+    geom_text(aes(y = dist_road),angle = 360, hjust = -.05, size = 5.3, fontface="italic")+
+    ylab(bquote("FRL relative to species range"~(km/km^2)))+
+    coord_flip(clip = "off")
+  
+  #Now join plots
+  library(gridExtra)
+  gg1 <- ggplot_gtable(ggplot_build(g1))
+  gg2 <- ggplot_gtable(ggplot_build(g2))
+  
+  # pdf("~/sp_new roads_AF_twobar.pdf", 15,5)
+  grid.arrange(gg1,gg2,ncol=2)
+  # dev.off()
+}
+
+## Nepal----------
+bar.np <- function(colset, idx='risk') {
+  g1<- ggplot(data=np2, aes(x=reorder(binomial,-dist_road), y=length, label=paste0(perc,"%")))+ 
+    geom_bar(stat="identity", width=0.8, fill=colset[np2[,idx]*100+1])+ 
+    theme_classic()+ 
+    theme(axis.title.y = element_blank(), 
+          axis.text.y = element_blank(),
+          axis.text.x = element_text(size=15), axis.title=element_text(size=15),
+          axis.ticks.y = element_blank(),
+          plot.margin = unit(c(1,-1,3.84,40), "mm")) +
+    geom_text(aes(y = length+120),angle = 360, hjust = -.05, size = 4.5)+
+    ylab("FRL (km)") + 
+    scale_y_reverse(breaks=seq(0,1000,200))+ scale_x_discrete(position="top")+
+    coord_flip()
+  
+  g2<- ggplot(data=np2, aes(x=reorder(binomial,-dist_road), y=dist_road, label=binomial))+ 
+    geom_bar(stat="identity", width=0.8, fill=colset[np2[,idx]*100+1])+
+    theme_classic()+ 
+    scale_y_continuous(breaks=seq(0,0.5,0.01))+
+    theme(axis.title.y = element_blank(), 
+          axis.text.y = element_blank(), 
+          axis.text.x = element_text(size=15), axis.title=element_text(size=15),
+          axis.ticks.y = element_blank(),
+          plot.margin = unit(c(1,40,1,-1), "mm")) +
+    geom_text(aes(y = dist_road),angle = 360, hjust = -.05, size = 5.3, fontface="italic")+
+    ylab(bquote("FRL relative to species range"~(km/km^2)))+
+    coord_flip(clip = "off")
+  
+  #Now join plots
+  library(gridExtra)
+  gg1 <- ggplot_gtable(ggplot_build(g1))
+  gg2 <- ggplot_gtable(ggplot_build(g2))
+  
+  # pdf("~/sp_new roads_NP_twobar.pdf", 15,5)
+  grid.arrange(gg1,gg2,ncol=2)
+  # dev.off()
+}
+
+```
+
+
+Ahora, estos son los barplots para las future roads con las mismas paletas de colores de arriba.
+
+<br><br>
+
+### Brazil {.tabset}
+
+**Old barplot**
+
+```{r fig.height=3, fig.width=16}
+bar.br(col.indx,idx = 'old_index')
+```
+
+**New barplot**
+
+#### original
+```{r fig.height=3, fig.width=16}
+bar.br(col.indx)
+```
+
+<br><br>
+
+#### Lajolla
+
+```{r fig.height=3, fig.width=16}
+bar.br(col.hcl1)
+```
+
+<br><br>
+
+#### SunsetDark
+
+```{r fig.height=3, fig.width=16}
+bar.br(col.hcl2)
+```
+
+<br><br>
+
+#### RedOr
+
+```{r fig.height=3, fig.width=16}
+bar.br(col.hcl3)
+```
+
+<br><br>
+
+#### Inferno
+
+```{r fig.height=3, fig.width=16}
+bar.br(col.hcl4)
+```
+
+<br><br>
+
+#### Plasma
+
+```{r fig.height=3, fig.width=16}
+bar.br(col.hcl5)
+```
+
+<br><br>
+
+### Africa {.tabset}
+
+**Old barplot**
+
+```{r fig.height=4, fig.width=16}
+bar.af(col.indx,idx = 'old_index')
+```
+
+**New barplot**
+
+#### original
+```{r fig.height=4, fig.width=16}
+bar.af(col.indx)
+```
+
+<br><br>
+
+#### Lajolla
+
+```{r fig.height=4, fig.width=16}
+bar.af(col.hcl1)
+```
+
+<br><br>
+
+#### SunsetDark
+
+```{r fig.height=4, fig.width=16}
+bar.af(col.hcl2)
+```
+
+<br><br>
+
+#### RedOr
+
+```{r fig.height=4, fig.width=16}
+bar.af(col.hcl3)
+```
+
+<br><br>
+
+#### Inferno
+
+```{r fig.height=4, fig.width=16}
+bar.af(col.hcl4)
+```
+
+<br><br>
+
+#### Plasma
+
+```{r fig.height=4, fig.width=16}
+bar.af(col.hcl5)
+```
+
+<br><br>
+
+### Nepal {.tabset}
+
+**Old barplot**
+
+```{r fig.height=3.4, fig.width=16}
+bar.np(col.indx,idx = 'old_index')
+```
+
+**New barplot**
+
+#### original
+```{r fig.height=3.4, fig.width=16}
+bar.np(col.indx)
+```
+
+<br><br>
+
+#### Lajolla
+
+```{r fig.height=3.4, fig.width=16}
+bar.np(col.hcl1)
+```
+
+<br><br>
+
+#### SunsetDark
+
+```{r fig.height=3.4, fig.width=16}
+bar.np(col.hcl2)
+```
+
+<br><br>
+
+#### RedOr
+
+```{r fig.height=3.4, fig.width=16}
+bar.np(col.hcl3)
+```
+
+<br><br>
+
+#### Inferno
+
+```{r fig.height=3.4, fig.width=16}
+bar.np(col.hcl4)
+```
+
+<br><br>
+
+#### Plasma
+
+```{r fig.height=3.4, fig.width=16}
+bar.np(col.hcl5)
+```
+
+<br><br>
+

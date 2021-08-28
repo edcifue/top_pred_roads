@@ -1,0 +1,10 @@
+name: "roads"
+output_dir: "docs"
+navbar:
+  title: "Carbon~Lidar"
+  left:
+    - text: "Road risk study cases"
+      href: index.html
+    # - text: "BA & ρ"
+    #   href: 03_ba.html
+output: html_document
