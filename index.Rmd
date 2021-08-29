@@ -35,11 +35,15 @@ $$ Road\ risk = \sum{{species\ risk}_i} + \left(\frac{\sum{{species\ risk}_i}}{n
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 setwd('~/Rproj/Rproj/02_roads_predators/')
 library(raster)
-rks <- raster('data/index_spp/species_index_sum_v2_Ago2021.tif')
-rkm <- raster('data/index_spp/species_index_mean_v2_Ago2021.tif')
-rkmin <- raster('data/index_spp/species_index_min_v2_Ago2021.tif')
+rks <- rksNA <- raster('data/index_spp/species_index_sum_v2_Ago2021.tif')
+rkm <- rkmNA <- raster('data/index_spp/species_index_mean_v2_Ago2021.tif')
+rkmin <- rkminNA <- raster('data/index_spp/species_index_min_v2_Ago2021.tif')
 rk.land <- raster('data/index_spp/species_index_land_v2_Ago2021.tif')
 PA <- raster('data/rasterize/protected_areas_land_masked.tif')
+rksNA[rksNA==0] <- NA
+rkmNA[rkmNA==0] <- NA
+rkminNA[rkminNA==0] <- NA
+
 ```
 
 
@@ -47,19 +51,23 @@ PA <- raster('data/rasterize/protected_areas_land_masked.tif')
 
 ### sum
 ```{r}
-plot(rks, main='sum of species risk')
+plot(rk.land, main='sum of species risk', col='grey', legend=F)
+plot(rksNA, add=T, col= hcl.colors(100, palette = 'viridis'))
+hcl.colors(1001, palette = 'Lajolla')
 ```
 
 ### min
 
 ```{r}
-plot(rkmin, main='min species risk')
+plot(rk.land, main='min species risk', col='grey', legend=F)
+plot(rkminNA, add=T, col= hcl.colors(100, palette = 'viridis'))
 ```
 
 ### mean
 
 ```{r}
-plot(rkm, main='mean species risk')
+plot(rk.land, main='mean species risk', col='grey', legend=F)
+plot(rkmNA, add=T, col= hcl.colors(100, palette = 'viridis'))
 ```
 
 ## {-}
@@ -158,36 +166,101 @@ plot(rkm.PA.np)#, zlim=c(0,maxValue(rkm.PA.np)))
 
 
 
-# Road Risk{.tabset}
-Ahora, así se vería el risk en la carretera (sin PA):
+# Road Risk
+Así se verían los tres risks (i.e., sum, sum + min\*PA y sum + mean\*PA):
 
-> tengo que actualizarlas con min·PA y con mean·PA
+```{r message=FALSE, warning=FALSE, include=FALSE}
+risk.r.land <- raster('data/index_spp/species_index_land_v2_Ago2021.tif')
 
-## Africa
-```{r}
-plot(crop(rk.land, e.af), col='grey', legend=F)
-plot(rks.af, col=sf.colors(10), legend.only=T)
-plot(risk.af[,'layer'], lwd=2, add=T, )
+# Africa line-risks intersect
+line.af.risk.sum <- st_read('data/index_spp/shp_lines_risks/risk_sum_line_AF/')
+line.af.risk.minPA <- st_read('data/index_spp/shp_lines_risks/risk_minPA_line_AF/')
+line.af.risk.meanPA <- st_read('data/index_spp/shp_lines_risks/risk_meanPA_line_AF/')
+
+# Brazil line-risks intersect
+line.brama.risk.sum <- st_read('data/index_spp/shp_lines_risks/risk_sum_line_BR/')
+line.brama.risk.minPA <- st_read('data/index_spp/shp_lines_risks/risk_minPA_line_BR/')
+line.brama.risk.meanPA <- st_read('data/index_spp/shp_lines_risks/risk_meanPA_line_BR/')
+
+# Nepal line-risks intersect
+line.np.risk.sum <- st_read('data/index_spp/shp_lines_risks/risk_sum_line_NP/')
+line.np.risk.minPA <- st_read('data/index_spp/shp_lines_risks/risk_minPA_line_NP/')
+line.np.risk.meanPA <- st_read('data/index_spp/shp_lines_risks/risk_meanPA_line_NP/')
+
+risk_rd_plot <- function(shp, main, col.horiz=F) {
+  plot(st_geometry(shp), col=NA, main=main)
+  plot(risk.r.land, col='grey', add=T, legend=F)
+  plot(PA, col='palegreen4', add=T, legend=F)
+  plot(shp[,'layer'], lwd=2, add=T)
+  plot(risk.r.land, zlim=range(shp$layer), legend.only=T, col=sf.colors(100), horiz=col.horiz)
+}
 ```
 
-## Brazil
+
+## Africa{.tabset}
+
+### sum
+
 ```{r}
-plot(crop(rk.land, e.br), col='grey', legend=F)
-plot(rks.br, col=sf.colors(10), legend.only=T)
-plot(risk.br[,'layer'], lwd=2, add=T, )
+risk_rd_plot(line.af.risk.sum,'sum')
 ```
 
-## Nepal
+### min PA
+
 ```{r}
-plot(crop(rk.land, e.np), col='grey', legend=F)
-plot(rks.np, col=sf.colors(10), legend.only=T)
-plot(risk.np[,'layer'], lwd=2, add=T, )
+risk_rd_plot(line.af.risk.minPA,'min PA')
+```
+
+### mean PA
+
+```{r}
+risk_rd_plot(line.af.risk.meanPA,'mean PA')
+```
+
+## Brazil{.tabset}
+
+### sum
+
+```{r}
+risk_rd_plot(line.brama.risk.sum,'sum')
+```
+
+### min PA
+
+```{r}
+risk_rd_plot(line.brama.risk.minPA,'min PA')
+```
+
+### mean PA
+
+```{r}
+risk_rd_plot(line.brama.risk.meanPA,'mean PA')
+```
+
+## Nepal{.tabset}
+
+### sum
+
+```{r}
+risk_rd_plot(line.np.risk.sum,'sum', col.horiz = T)
+```
+
+### min PA
+
+```{r}
+risk_rd_plot(line.np.risk.minPA,'min PA', col.horiz = T)
+```
+
+### mean PA
+
+```{r}
+risk_rd_plot(line.np.risk.meanPA,'mean PA', col.horiz = T)
 ```
 
 
 
 
-# Figure 3
+# Bar plots Figure 3
 
 ```{r}
 ##Import species index data for colors---------
@@ -201,6 +274,7 @@ index_sp$risk <- round(index_sp$risk*10,1)
 
 #colors for index by the value
 col.indx <- colorRampPalette(list('darkgreen','forestgreen','chartreuse4','darkolivegreen3','yellow','orange','red','darkred','indianred4','lightpink4'))(1001)
+col.hcl0 <- hcl.colors(1001, palette = 'viridis')
 col.hcl1 <- hcl.colors(1001, palette = 'Lajolla')
 col.hcl2 <- rev(hcl.colors(1001, palette = 'SunsetDark'))
 col.hcl3 <- rev(hcl.colors(1001, palette = 'RedOr'))
@@ -233,6 +307,12 @@ sp.bar(index_sp,col.indx,'new index - original color')
 ```
 
 <br><br>
+
+### viridis
+
+```{r fig.height=4.5}
+sp.bar(index_sp,col.hcl0,'new index - viridis')
+```
 
 ### Lajolla
 
@@ -455,6 +535,14 @@ bar.br(col.indx)
 
 <br><br>
 
+#### viridis
+
+```{r fig.height=3, fig.width=16}
+bar.br(col.hcl0)
+```
+
+<br><br>
+
 #### Lajolla
 
 ```{r fig.height=3, fig.width=16}
@@ -512,6 +600,14 @@ bar.af(col.indx)
 
 <br><br>
 
+#### viridis
+
+```{r fig.height=4, fig.width=16}
+bar.af(col.hcl0)
+```
+
+<br><br>
+
 #### Lajolla
 
 ```{r fig.height=4, fig.width=16}
@@ -565,6 +661,14 @@ bar.np(col.indx,idx = 'old_index')
 #### original
 ```{r fig.height=3.4, fig.width=16}
 bar.np(col.indx)
+```
+
+<br><br>
+
+#### viridis
+
+```{r fig.height=3.4, fig.width=16}
+bar.np(col.hcl0)
 ```
 
 <br><br>

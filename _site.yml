@@ -1,7 +1,7 @@
 name: "roads"
 output_dir: "docs"
 navbar:
-  title: "Carbon~Lidar"
+  title: "Roads"
   left:
     - text: "Road risk study cases"
       href: index.html
