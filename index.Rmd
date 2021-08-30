@@ -272,7 +272,7 @@ index_sp$risk <- round(index_sp$risk*10,1)
 
 
 #colors for index by the value
-col.indx <- colorRampPalette(list('forestgreen','chartreuse4','darkolivegreen3','yellow','orange','red','darkred','indianred4','lightpink4'))(1001)
+col.indx <- colorRampPalette(list("lightgoldenrodyellow","lightgoldenrod1","yellow","gold","orange","darkorange","firebrick1",'red',"firebrick",'darkred',"firebrick4",'indianred4','lightpink4'))(1001)
 col.hcl0 <- hcl.colors(1001, palette = 'viridis')
 col.hcl1 <- hcl.colors(1001, palette = 'Lajolla')
 col.hcl2 <- rev(hcl.colors(1001, palette = 'SunsetDark'))
