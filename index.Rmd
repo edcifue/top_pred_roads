@@ -272,6 +272,7 @@ index_sp$risk <- round(index_sp$risk*10,1)
 
 
 #colors for index by the value
+col.orig<- colorRampPalette(list('darkgreen','forestgreen','chartreuse4','darkolivegreen3','yellow','orange','red','darkred','indianred4','lightpink4'))(1001)
 col.indx <- colorRampPalette(list("lightgoldenrodyellow","lightgoldenrod1","yellow","gold","orange","darkorange","firebrick1",'red',"firebrick",'darkred',"firebrick4",'indianred4','lightpink4'))(1001)
 col.hcl0 <- hcl.colors(1001, palette = 'viridis')
 col.hcl1 <- hcl.colors(1001, palette = 'Lajolla')
@@ -296,7 +297,7 @@ sp.bar <- function(db,colset, main) {
   text(h,0.1, labels=db$risk, srt=90, adj=0, cex=.8)
 }
 
-sp.bar(old,col.indx,'old index - original color')
+sp.bar(old,col.orig,'old index - original color')
 ```
 
 ### original
@@ -522,7 +523,7 @@ Ahora, estos son los barplots para las future roads con las mismas paletas de co
 **Old barplot**
 
 ```{r fig.height=3, fig.width=16}
-bar.br(col.indx,idx = 'old_index')
+bar.br(col.orig,idx = 'old_index')
 ```
 
 **New barplot**
@@ -587,7 +588,7 @@ bar.br(col.hcl5)
 **Old barplot**
 
 ```{r fig.height=4, fig.width=16}
-bar.af(col.indx,idx = 'old_index')
+bar.af(col.orig,idx = 'old_index')
 ```
 
 **New barplot**
@@ -652,7 +653,7 @@ bar.af(col.hcl5)
 **Old barplot**
 
 ```{r fig.height=3.4, fig.width=16}
-bar.np(col.indx,idx = 'old_index')
+bar.np(col.orig,idx = 'old_index')
 ```
 
 **New barplot**
