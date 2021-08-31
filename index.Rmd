@@ -300,7 +300,7 @@ sp.bar <- function(db,colset, main) {
 sp.bar(old,col.orig,'old index - original color')
 ```
 
-### original
+### new palette
 
 ```{r fig.height=4.5}
 sp.bar(index_sp,col.indx,'new index - original color')
@@ -528,7 +528,7 @@ bar.br(col.orig,idx = 'old_index')
 
 **New barplot**
 
-#### original
+#### new palette
 ```{r fig.height=3, fig.width=16}
 bar.br(col.indx)
 ```
@@ -593,7 +593,7 @@ bar.af(col.orig,idx = 'old_index')
 
 **New barplot**
 
-#### original
+#### new palette
 ```{r fig.height=4, fig.width=16}
 bar.af(col.indx)
 ```
@@ -658,7 +658,7 @@ bar.np(col.orig,idx = 'old_index')
 
 **New barplot**
 
-#### original
+#### new palette
 ```{r fig.height=3.4, fig.width=16}
 bar.np(col.indx)
 ```
